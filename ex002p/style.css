@@ -1,0 +1,17 @@
+body{
+    background-color: black;
+    margin: 0;
+}
+
+.map{
+    display: grid;
+    grid-template-columns: repeat(3, auto);
+    gap: 0;
+    justify-content: center;
+}
+
+.map img{
+    display: block;
+    width: 100%;
+    height: auto;
+}

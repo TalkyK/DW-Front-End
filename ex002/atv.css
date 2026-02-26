@@ -1,0 +1,10 @@
+body{
+    background-color: gray
+}
+
+img{
+    width: 800px; /* largura */
+    height: 500px; /* altura */
+    background-color: yellowgreen;
+    border-radius: 50%;
+} 
