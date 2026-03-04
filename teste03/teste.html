@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Neon Survival - Boss Mode</title>
+<style>
+body {
+    margin: 0;
+    background: #05050a;
+    overflow: hidden;
+    font-family: Arial;
+    color: white;
+}
+canvas {
+    display: none;
+    margin: auto;
+    background: radial-gradient(circle, #111 0%, #000 80%);
+}
+#menu {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+}
+button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+}
+#ui {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+</style>
+</head>
+<body>
+
+<div id="menu">
+    <h1>Selecione a Dificuldade</h1>
+    <button onclick="startGame('easy')">Fácil</button>
+    <button onclick="startGame('medium')">Médio</button>
+    <button onclick="startGame('hard')">INSANO 😈</button>
+</div>
+
+<div id="ui">
+❤️ Vida: <span id="hp">100</span>
+⚡ Level: <span id="lvl">1</span>
+👑 Boss: <span id="bossStatus">Não</span>
+</div>
+
+<canvas id="game" width="700" height="700"></canvas>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+let difficulty = {};
+let enemies = [];
+let bullets = [];
+let bossBullets = [];
+let boss = null;
+let keys = {};
+let spawnRate;
+let gameStarted = false;
+
+const player = {
+    x: 350,
+    y: 350,
+    size: 15,
+    speed: 4,
+    hp: 100,
+    level: 1,
+    damage: 10
+};
+
+document.addEventListener("keydown", e => keys[e.key] = true);
+document.addEventListener("keyup", e => keys[e.key] = false);
+
+function startGame(mode){
+    document.getElementById("menu").style.display = "none";
+    canvas.style.display = "block";
+    gameStarted = true;
+
+    if(mode === "easy"){
+        difficulty = {enemySpeed:1.2, enemyHP:20, spawn:1200};
+    }
+    if(mode === "medium"){
+        difficulty = {enemySpeed:1.8, enemyHP:35, spawn:800};
+    }
+    if(mode === "hard"){
+        difficulty = {enemySpeed:2.5, enemyHP:50, spawn:500};
+    }
+
+    spawnRate = setInterval(spawnEnemy, difficulty.spawn);
+    setInterval(autoShoot, 400);
+    update();
+}
+
+function spawnEnemy(){
+    if(boss) return;
+
+    enemies.push({
+        x: Math.random()*700,
+        y: -20,
+        size: 15,
+        hp: difficulty.enemyHP + player.level*5
+    });
+}
+
+function spawnBoss(){
+    boss = {
+        x: 350,
+        y: 100,
+        size: 40,
+        hp: 500 + player.level*50,
+        speed: 3 + player.level*0.3
+    };
+    document.getElementById("bossStatus").innerText = "SIM";
+}
+
+function autoShoot(){
+    if(!gameStarted) return;
+    enemies.forEach(e=>{
+        const angle = Math.atan2(e.y-player.y, e.x-player.x);
+        bullets.push({
+            x:player.x,
+            y:player.y,
+            dx:Math.cos(angle)*6,
+            dy:Math.sin(angle)*6
+        });
+    });
+
+    if(boss){
+        const angle = Math.atan2(boss.y-player.y, boss.x-player.x);
+        bullets.push({
+            x:player.x,
+            y:player.y,
+            dx:Math.cos(angle)*6,
+            dy:Math.sin(angle)*6
+        });
+    }
+}
+
+function update(){
+    ctx.clearRect(0,0,700,700);
+
+    if(keys["ArrowUp"]) player.y -= player.speed;
+    if(keys["ArrowDown"]) player.y += player.speed;
+    if(keys["ArrowLeft"]) player.x -= player.speed;
+    if(keys["ArrowRight"]) player.x += player.speed;
+
+    ctx.fillStyle="cyan";
+    ctx.beginPath();
+    ctx.arc(player.x,player.y,player.size,0,Math.PI*2);
+    ctx.fill();
+
+    bullets.forEach((b,i)=>{
+        b.x+=b.dx;
+        b.y+=b.dy;
+        ctx.fillStyle="yellow";
+        ctx.fillRect(b.x,b.y,4,4);
+    });
+
+    enemies.forEach((e,ei)=>{
+        const angle = Math.atan2(player.y-e.y, player.x-e.x);
+        e.x+=Math.cos(angle)*difficulty.enemySpeed;
+        e.y+=Math.sin(angle)*difficulty.enemySpeed;
+
+        ctx.fillStyle="red";
+        ctx.beginPath();
+        ctx.arc(e.x,e.y,e.size,0,Math.PI*2);
+        ctx.fill();
+
+        bullets.forEach((b,bi)=>{
+            if(Math.hypot(b.x-e.x,b.y-e.y)<e.size){
+                e.hp-=player.damage;
+                bullets.splice(bi,1);
+                if(e.hp<=0){
+                    enemies.splice(ei,1);
+                    player.level++;
+                    document.getElementById("lvl").innerText=player.level;
+                    if(player.level%5===0) spawnBoss();
+                }
+            }
+        });
+    });
+
+    if(boss){
+        const angle = Math.atan2(player.y-boss.y, player.x-boss.x);
+        boss.x+=Math.cos(angle)*boss.speed;
+        boss.y+=Math.sin(angle)*boss.speed;
+
+        ctx.fillStyle="purple";
+        ctx.beginPath();
+        ctx.arc(boss.x,boss.y,boss.size,0,Math.PI*2);
+        ctx.fill();
+
+        if(Math.random()<0.03){
+            const ang = Math.atan2(player.y-boss.y, player.x-boss.x);
+            bossBullets.push({
+                x:boss.x,
+                y:boss.y,
+                dx:Math.cos(ang)*7,
+                dy:Math.sin(ang)*7
+            });
+        }
+
+        bullets.forEach((b,bi)=>{
+            if(Math.hypot(b.x-boss.x,b.y-boss.y)<boss.size){
+                boss.hp-=player.damage;
+                bullets.splice(bi,1);
+                if(boss.hp<=0){
+                    boss=null;
+                    document.getElementById("bossStatus").innerText="Não";
+                }
+            }
+        });
+    }
+
+    bossBullets.forEach((bb,i)=>{
+        bb.x+=bb.dx;
+        bb.y+=bb.dy;
+        ctx.fillStyle="orange";
+        ctx.fillRect(bb.x,bb.y,5,5);
+
+        if(Math.hypot(bb.x-player.x,bb.y-player.y)<player.size){
+            player.hp-=5;
+            document.getElementById("hp").innerText=player.hp;
+            bossBullets.splice(i,1);
+            if(player.hp<=0){
+                alert("Você morreu no nível "+player.level);
+                location.reload();
+            }
+        }
+    });
+
+    requestAnimationFrame(update);
+}
+</script>
+
+</body>
+</html>
