@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>FichasApp</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <h1>Grimório de Personagens</h1>
+  <button id="themeToggle">🌙</button>
+</header>
+
+<main>
+  <div class="coin-container">
+    <div class="coin" id="coin">
+      
+      <div class="face front">
+        <h2>🎲 RPG</h2>
+        <p>Forje seu personagem</p>
+      </div>
+
+      <div class="face back">
+        <h2>📖 Story</h2>
+        <p>Dê vida à sua história</p>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="actions">
+    <button onclick="goTo('rpg')">Modo RPG</button>
+    <button onclick="goTo('story')">Modo Story</button>
+  </div>
+</main>
+
+<script src="script.js"></script>
+</body>
+</html>
